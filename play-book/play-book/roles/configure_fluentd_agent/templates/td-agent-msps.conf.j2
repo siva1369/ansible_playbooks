@@ -1,0 +1,39 @@
+# td-agent configuration file
+# ---------------------------
+
+{% for server in servers if server.name == inventory_hostname %}
+{% for item in server.apps %}
+<source>
+  @type tail
+  format json
+  read_lines_limit 256
+  path /msservice/app/logs/{{ item }}/{{ item }}.log.json
+  pos_file /msservice/app/logs/{{ item }}.audit.json.pos
+  tag env.{{ env }}
+</source>
+{% endfor %}
+{% endfor %}
+
+#filter to add infra
+<filter env.{{ env }}>
+    @type record_transformer
+    <record>
+        infra legacy
+        hostname {{ inventory_hostname }}
+    </record>
+</filter>
+
+#forward to aggregator 
+<match env.{{ env }}>
+  type copy
+   <store>
+    @type forward
+    host el4711.bc
+    buffer_chunk_limit 2m
+    buffer_queue_limit 128
+    phi_threshold 16
+    heartbeat_type tcp
+    heartbeat_interval 5
+  </store>
+</match>
+

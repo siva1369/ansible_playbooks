@@ -1,0 +1,32 @@
+---
+ - hosts: '{{ host }}'
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+    - /msservice/bin/ansible/vars/DR/apps/{{ appcode }}.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: STOP
+       stat: path={{dir_instance}}/PID/{{appcode}}.pid
+       register: res
+     - name: Set variable
+       shell: echo  {{ appcode }} | tr -d -
+       register: app
+     - name: Put in maintance
+       local_action: shell echo -e "{{ app.stdout }}"='"{{ status}}-{{env}}"' >> /msservice/bin/ansible/scripts/maintenance.conf
+     - name: Shutdown current application deployed on host
+       shell: PID=`cat {{dir_pid}}/{{appcode}}.pid` && kill -9 $PID ; rm {{dir_pid}}/{{appcode}}.pid
+       when: res.stat.exists
+       ignore_errors: yes
+     - name: Remove from maintance
+       local_action: shell sed -i '/{{ app.stdout }}/d' /msservice/bin/ansible/scripts/maintenance.conf
+     - name: Log stat
+       stat: path={{dir_log}}/{{appcode}}.log
+       register: log_stat
+     - name: Log rotate
+       shell: mv {{dir_log}}/{{appcode}}.log {{dir_log}}/{{appcode}}.log.$(date +%F-%H:%M).log
+       when: log_stat.stat.exists
+       ignore_errors: yes
+     - name: Start jar file with DT
+       shell: if [ -f /opt/dynatrace/agent/lib/liboneagentproc.so ] ; then LD_PRELOAD=liboneagentproc.so && DT_CUSTOM_PROP="CI_NAME={{dt_ci}} ENVIRONMENT={{dt_env}} LD_PRELOAD=liboneagentproc.so" && export LD_PRELOAD && export DT_CUSTOM_PROP ; fi ; nohup /usr/bin/java -server -{{xms_app}} -{{xmx_app}} -{{premsize_app}} -{{heapdump_app}} -{{heapdumppath_app}} -Dspring.profiles.active={{env}}{{optional_profiles}} {{optional_vm_args}} {{truststore}} -jar {{dir_deploy}}{{appcode}}-*.jar & echo $! > {{dir_pid}}/{{appcode}}.pid
+       ignore_errors: yes

@@ -1,0 +1,22 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+    - /msservice/bin/ansible/vars/app/{{ appcode }}.yml
+
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: create file
+       local_action: shell touch /msservice/bin/ansible/scripts/{{ appcode }}.txt
+     - name: collect port uat
+       shell: curl -s {{eureka_prd}}apps/{{ appcode }}/ | grep port | head -1 | cut -d "<" -f2 | cut -d ">" -f2
+       register: port
+     - debug:  var=port.stdout
+     - name: Get Version
+       shell: curl -s http://{{ansible_hostname}}:{{port.stdout}}/{{ appcode }}/actuator/info | cut -d ":" -f6 | cut -d "," -f1 | sed 's/"//g'
+       register: ver
+     - debug: var=ver.stdout
+     - name: put in template
+       local_action: shell sed -e "s/{version}/{{ver.stdout}}/g" -e "s/{appcode}/{{appcode}}/g" -e "s/{server1}/{{ansible_hostname}}/g" -e "s/{heap}/{{xmx_app}}/g" -e "s/{prem}/{{premsize_app}}/g" -e "s/{port}/{{port.stdout}}/g"  /msservice/bin/ansible/scripts/template-{{env}}.txt >> /msservice/bin/ansible/scripts/{{ appcode }}.txt
+

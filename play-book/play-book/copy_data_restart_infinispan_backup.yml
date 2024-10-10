@@ -1,0 +1,40 @@
+---
+ - hosts: 'infinispan-slave1-prd'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Copy files to server-master-one on DR
+       shell: rsync -avz --delete /msservice/data/infinispan/backup/ msservice@el4635.ebc.local:/msservice/data/infinispan/server-master-one
+       async: 2000
+       poll: 0
+       register: master_sleeper
+     - name: Copy files to server-slave-one on DR
+       shell: rsync -avz --delete /msservice/data/infinispan/backup/ msservice@el4636.ebc.local:/msservice/data/infinispan/server-slave-one
+       async: 2000
+       poll: 0
+       register: slave_sleeper
+     - name: Copy files to server-slave-two on DR
+       shell: rsync -avz --delete /msservice/data/infinispan/backup/ msservice@el4673.ebc.local:/msservice/data/infinispan/server-slave-two
+       async: 2000
+       poll: 0
+       register: slavetwo_sleeper
+     - name: Check and fire restart of master-one_sleeper
+       async_status: jid={{ master_sleeper.ansible_job_id }}
+       register: job1_result
+       until: job1_result.finished
+       retries: 120
+     - name: Check and fire restart of slave-one_sleeper
+       async_status: jid={{ slave_sleeper.ansible_job_id }}
+       register: job2_result
+       until: job2_result.finished
+       retries: 120
+     - name: Check and fire restart of slave-two_sleeper
+       async_status: jid={{ slavetwo_sleeper.ansible_job_id }}
+       register: job3_result
+       until: job3_result.finished
+       retries: 120
+#     - name: start servers
+#       include: /msservice/bin/ansible/play-book/start_infinispan_singlenode_dr.yml
+#       when: job1_result.finished == True and job2_result.finished == True and job3_result.finished == True

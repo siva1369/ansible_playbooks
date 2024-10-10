@@ -1,0 +1,18 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+
+   vars_files:
+    - /msservice/bin/ansible/vars/fluentd_vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: "Get hostname"
+       shell: "hostname"
+       register: host
+     - name: Check if td-agent exists
+       stat: path=/etc/td-agent
+       register: result
+     - name: Start td-agent
+       shell: "sudo systemctl restart td-agent"
+       when: result.stat.exists
+       ignore_errors: true

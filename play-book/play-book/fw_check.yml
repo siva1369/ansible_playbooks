@@ -1,0 +1,19 @@
+---
+ - hosts: 'fluend2' 
+
+   vars_files:
+    - /msservice/bin/ansible/vars/fluentd_vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Register disk space before cleanup
+       shell: "nc -v smtp-ecm-d.BGC.NET 25"
+       register: result_fw
+       ignore_errors: true
+
+
+
+
+
+
+

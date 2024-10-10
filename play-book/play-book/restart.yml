@@ -1,0 +1,30 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: STOP
+       stat: path={{dir_instance}}/PID/{{appcode}}.pid
+       register: res
+     - name: Set variable
+       shell: echo  {{ appcode }} | tr -d -
+       register: app
+     - name: Put in maintance
+       local_action: shell echo -e "{{ app.stdout }}"='"{{ status}}-{{env}}"' >> /msservice/bin/ansible/scripts/maintenance.conf
+     - name: Shutdown current application deployed on host
+       shell: PID=`cat {{dir_pid}}/{{appcode}}.pid` && kill -9 $PID ; rm {{dir_pid}}/{{appcode}}.pid
+       when: res.stat.exists
+       ignore_errors: yes
+     - name: Remove from maintance
+       local_action: shell sed -i '/{{ app.stdout }}/d' /msservice/bin/ansible/scripts/maintenance.conf
+     - name: Log stat
+       stat: path={{dir_log}}/{{appcode}}.log
+       register: log_stat
+     - name: Log rotate
+       shell: mv {{dir_log}}/{{appcode}}.log {{dir_log}}/{{appcode}}.log.$(date +%F-%H:%M).log
+       when: log_stat.stat.exists
+     - name: START
+       shell: [ -f /opt/dynatrace/agent/lib/liboneagentproc.so ] && LD_PRELOAD=liboneagentproc.so && DT_CUSTOM_PROP="CI_NAME=MSPC Environment=A LD_PRELOAD=liboneagentproc.so LD_PRELOAD.source=ansible.exported" && export LD_PRELOAD && export DT_CUSTOM_PROP ; nohup /usr/bin/java -server -Xms512M -Xmx512M -XX:MaxPermSize=256M -Dspring.profiles.active={{env}} -jar {{dir_deploy}}{{appcode}}-*.jar & echo $! > {{dir_pid}}/{{appcode}}.pid
+    #   shell: nohup /usr/bin/java -Dspring.profiles.active={{env}} -jar {{dir_deploy}}{{appcode}}-*.jar & echo $! > {{dir_pid}}/{{appcode}}.pid

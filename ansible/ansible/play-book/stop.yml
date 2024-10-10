@@ -1,0 +1,19 @@
+---
+ - hosts: '{{ appcode }}-{{ env|lower }}'
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: STOP
+       stat: path={{dir_pid}}/{{appcode}}.pid
+       register: res
+     - name: Set variable
+       shell: echo  {{ appcode }} | tr -d -
+       register: app
+     - name: Putting Server in Maintenance
+       local_action: shell echo -e "{{ app.stdout }}"='"{{ status}}-{{ env }}"' >> /msservice/bin/ansible/scripts/maintenance.conf
+     - name: Shutdown current application deployed on host
+       shell: PID=`cat {{dir_pid}}/{{appcode}}.pid` && kill -15 $PID ; rm {{dir_pid}}/{{appcode}}.pid
+       when: res.stat.exists
+       ignore_errors: yes

@@ -1,0 +1,11 @@
+---
+- name: Configure FluentD msps
+  vars_files:
+    - /msservice/bin/ansible/vars/PRD/instances-vars.yml
+  hosts: fluentd-prd
+  serial: 1
+  roles:
+   - {
+        role: configure_fluentd_agent,
+        dynamic_config_file: "td-agent-prod-msps.conf"
+     }

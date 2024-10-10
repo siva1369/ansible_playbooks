@@ -1,0 +1,23 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: STOP
+       stat: path={{dir_instance}}/PID/{{appcode}}.pid
+       register: res
+     - name: Set variable
+       shell: echo  {{ appcode }} | tr -d -
+       register: app
+     - name: Put in maintance
+       local_action: shell echo -e "{{ app.stdout }}"='"DISABLE"' >> /msservice/bin/ansible/scripts/maintenance.conf
+     - name: Shutdown current application deployed on host
+       shell: PID=`cat {{dir_pid}}/{{appcode}}.pid` && kill -9 $PID ; rm {{dir_pid}}/{{appcode}}.pid
+       when: res.stat.exists
+       ignore_errors: yes
+     - name: Remove from maintance
+       local_action: shell sed -i '/fatjartest/d' /msservice/bin/ansible/scripts/maintenance.conf
+     - name: START
+       shell: nohup /usr/bin/java -Dspring.profiles.active={{env}} -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address={{port}},suspend=n  \-jar {{dir_deploy}}{{appcode}}-*.jar & echo $! > {{dir_pid}}/{{appcode}}.pid

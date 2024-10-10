@@ -1,0 +1,24 @@
+---
+ - hosts: all-vms-prod
+
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: get hostname
+       shell: hostname
+       register: host
+     - name: apps deployed on the server
+       command: ls /msservice/app/logs
+       register: list_apps 
+     - name: check if json file exist
+       shell: locate *.log.json |grep -v '2018' | awk -F'/' '{print $6}' | awk -F'.' '{print $1}'
+       register: list_logs 
+     - name: grep for applications configured
+       shell: grep path /etc/td-agent/td-agent.conf | grep -v '#' | awk -F'/' '{print $5}' | sort | uniq
+       register: list
+     - debug:
+         msg: 
+            - "Apps deployed on the server- {{ host.stdout }}"
+            - "Apps deployed on the server- {{ list_apps.stdout }}"  
+            - "Apps with json logs-         {{ list_logs.stdout }}"
+            - "Apps configured on the serv- {{ list.stdout }}"

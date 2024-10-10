@@ -1,0 +1,10 @@
+---
+ - hosts: 'infinispan-slave1-prd'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Start single nod
+       script: /msservice/bin/ansible/scripts/infinispan-start.sh
+   

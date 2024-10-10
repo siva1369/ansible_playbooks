@@ -1,0 +1,34 @@
+---
+ - hosts: '{{ appcode }}-{{ env | lower }}'
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+   - name: Creates directory under release folder
+     local_action: file path={{dir_release}} state=directory mode=0754
+   
+   - name: Creates directory under msservice folder
+     file: path={{dir_server}} state=directory mode=0755
+   
+   - name: Creates app directory on the remote host
+     file: path={{dir_instance}} state=directory mode=0755
+
+   - name: Creates deployment directory on the remote host
+     file: path={{dir_deploy}} state=directory mode=0754
+
+   - name: Creates log directory on the remote host
+     file: path={{dir_log}} state=directory mode=0755
+
+   - name: Creates log directory on the remote host
+     file: path={{dir_pid}} state=directory mode=0754
+
+   - name: Creates data directory on the remote host
+     file: path={{dir_app_data}} state=directory mode=0755
+
+   - name: generate config
+     local_action: template src="{{dir_app_var}}sample.j2" dest="{{dir_app_var}}{{appcode}}.yml"
+
+   - name: Creates a entry in monitoring service file 
+     local_action: shell echo {{ appcode }} >> /msservice/bin/ansible/scripts/service-list.txt
+ 

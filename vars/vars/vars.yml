@@ -1,0 +1,93 @@
+---
+dir_server: "/msservice/app/"
+dir_common_log: "/msservice/app/logs/"
+dir_app: "/msservice/data/"
+dir_root: "/msservice"
+dir_instance: "{{ dir_server~appcode }}"
+dir_config: "{{ dir_instance~'/configuration/' }}"
+dir_deploy: "{{ dir_instance~'/deployments/' }}"
+dir_log: "{{ dir_common_log~appcode }}"
+dir_module: "{{ dir_app~'/'~application~'/modules/' }}"
+dir_release: "{{ '/msservice/releases/'~appcode }}"
+application: "{{ appcode.replace('-','_') }}"
+dir_pid: "{{ dir_instance~'/PID' }}"
+dir_app_data: "{{dir_app~appcode}}"
+status: "DISABLE"
+dir_app_var: "/msservice/bin/ansible/vars/{{ env }}/apps/"
+xms: "Xms512M"
+xmx: "Xmx512M"
+premsize: "XX:MaxPermSize=256M"
+heapdump: "XX:+HeapDumpOnOutOfMemoryError"
+heapdumppath: "XX:HeapDumpPath=/msservice/data"
+eureka_UAT: "http://mstba-eureka-ws.glb.ebc.local:10063/serviceregistry/eureka/"
+eureka_PRD: "http://mstbp-eureka-ws.glb.ebc.local:10063/serviceregistry/eureka/"
+eureka_DR: "http://mstbb-eureka-ws.glb.ebc.local:10063/serviceregistry/eureka/"
+optional_profiles: ""
+optional_vm_args: "-Dfile.encoding=UTF-8"
+groups:  
+  - ci_name: 'mbil'
+    apps:
+      - 'bill-downloader'
+      - 'billing-accounts'
+      - 'billing-transactions'
+      - 'billing-payments'
+      - 'billing-methods'
+      - 'billing-complaints'
+      - 'billing-aggregator'
+      - 'billing-details'
+      - 'billing-pop'
+      - 'billing-refund'
+      - 'mtfb-migration-status'
+  - ci_name: 'macc'
+    apps:
+      - 'user-avatar'
+      - 'user-application-trusts'
+      - 'customer-administrators'
+      - 'customer-access-numbers'
+      - 'easy-switch'
+  - ci_name: 'loy'
+    apps:
+      - 'loyalty-program'
+      - 'awards'
+      - 'ordering-loyalty'
+  - ci_name: 'mprd'
+    apps:
+      - 'product-options'
+      - 'products-aggregator'
+      - 'products-detail-aggregator'
+      - 'user-products'
+      - 'user-products'
+      - 'user-products'
+      - 'product-info-mobile'
+  - ci_name: 'mmal'
+    apps:
+      - 'mailbox'
+  - ci_name: 'musg'
+    apps:
+      - 'billing-account-overview-aggregator'
+      - 'unbilled-balance'
+      - 'usage-product-fixed-telephony'
+      - 'usage-product-internet'
+      - 'usage-product-tv'
+      - 'average-usage-calculator'
+      - 'usage-product-fixed-telephony'
+      - 'usage-product-internet'
+      - 'usage-product-mobile-postpaid'
+      - 'historical-usage-prepaid'
+      - 'messenger  tariff-charges'
+      - 'usage-product-mobile-postpaid'
+      - 'translation'
+      - 'usage-product-aggregator'
+      - 'mobile-network-status'
+  - ci_name: 'mspc'
+    apps:
+      - 'user'
+      - 'user-billing-structure'
+      - 'customer-billing-structure'
+      - 'cdb-customer-provider'
+      - 'address'
+      - 'contact-person'
+      - 'installbase'
+  - ci_name: 'dep'
+    apps:
+      - 'xbc-fast-read'

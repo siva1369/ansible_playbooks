@@ -1,0 +1,32 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   gather_facts: yes
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+     - /msservice/bin/ansible/vars/UAT/apps/{{ appcode }}.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Get PID
+       shell: PID=`cat {{dir_instance}}/PID/{{appcode}}.pid` && ps cax | grep $PID
+       register: res
+       ignore_errors: yes
+     - name: Remove from maintance
+       local_action: lineinfile dest=/msservice/bin/ansible/scripts/maintenance.conf regexp='^fatjartest' state=absent
+     #  local_action: shell sed -i '/fatjartest/d' /msservice/bin/ansible/scripts/maintenance.conf
+     - name: Start
+      # shell: nohup /usr/bin/java -Dspring.profiles.active={{env}} -jar {{dir_deploy}}{{appcode}}-*.jar & echo $! > {{dir_pid}}/{{appcode}}.pid
+       shell: if [ -f /opt/dynatrace/agent/lib/liboneagentproc.so ] ; then LD_PRELOAD=liboneagentproc.so && DT_CUSTOM_PROP="CI_NAME={{dt_ci}} ENVIRONMENT={{dt_env}} LD_PRELOAD=liboneagentproc.so" && export LD_PRELOAD && export DT_CUSTOM_PROP ; fi ; nohup /usr/bin/java -server -{{xms_app}} -{{xmx_app}} -{{premsize_app}} -{{heapdump_app}} -{{heapdumppath_app}} {{truststore}} -Dspring.profiles.active={{env}}{{optional_profiles}} -jar {{dir_deploy}}{{appcode}}-*.jar & echo $! > {{dir_pid}}/{{appcode}}.pid
+       when: res.rc != 0
+     - name: Send email
+      # local_action: mail to="raj.dash.ext@proximus.com" subject='The process for "{{appcode}}" was not running & now it is restarted in "{{env}}"'
+       local_action: mail
+                     host='mailhub.bc' 
+                     port=25
+                     from="service.admin@proximus.com"
+                     to="BMBDLCIMCCSOMESCss@proximus.net"
+                     subject= "{{appcode}}  {{ ansible_hostname }}"
+                     body='The process for "{{appcode}}" was not running on "{{ ansible_hostname }}" & now it is restarted in "{{env}}" \n NOTE:- If you recieve the same email for the same host multiple times please check the logs, as there could be issues due to which the the application is not starting up'
+       
+       when: res.rc != 0
+

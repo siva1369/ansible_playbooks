@@ -1,0 +1,5 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   tasks:
+     - name: Remove from maintance
+       local_action: shell echo "{{ appcode }}::{{ inventory_hostname }}" >> /msservice/bin/ansible/hosts/PRD/nstances

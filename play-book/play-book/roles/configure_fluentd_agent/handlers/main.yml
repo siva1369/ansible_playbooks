@@ -1,0 +1,19 @@
+---
+# Notified when settings were changed
+
+- name: td-agent_start
+  shell: "sudo systemctl start td-agent"
+
+- name: td-agent_stop
+  shell: "sudo systemctl stop td-agent"
+
+- name: td-agent_restart
+  shell: "sudo systemctl restart td-agent"
+
+- name: td-agent_reload
+  shell: "sudo systemctl reload td-agent"
+
+# Push config to /etc/td-agent/td-agent.conf
+- name: td-agent_deploy_config
+  shell: "cat {{tdagent_dryrun_config}} | sudo /usr/bin/tee {{tdagent_config}}"
+  notify: td-agent_restart

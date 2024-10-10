@@ -1,0 +1,41 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Checking..................
+       local_action: stat path={{dir_release}}/{{appcode}}-{{version}}.jar
+       register: result
+     - name: Check the ear file
+       fail: msg="ear file doesn't exist"
+       when: not result.stat.exists
+       ignore_errors: yes
+     - name: Checking..................
+       stat: path={{dir_pid}}/{{appcode}}.pid
+       register: res
+     - name: Remove current application deployed on host
+       shell: PID=`cat {{dir_pid}}/{{appcode}}.pid` && kill -9 $PID ; rm {{dir_pid}}/{{appcode}}.pid
+       when: res.stat.exists
+       ignore_errors: yes
+     - name: Checking..................
+       stat: path={{dir_deploy}}{{appcode}}*.jar
+       register: rest
+     - name: Preparing deploymet folder
+       shell: rm -f {{dir_deploy}}*.jar
+       #file: path={{dir_deploy}}*.jar state=absent
+     - name: copy file if it exists
+       copy: src={{dir_release}}/{{appcode}}-{{version}}.jar dest={{dir_deploy}}
+       when: result.stat.exists
+     - name: Log stat
+       stat: path={{dir_log}}/{{appcode}}.log
+       register: log_stat
+     - name: Log rotate
+       shell: mv {{dir_log}}/{{appcode}}.log {{dir_log}}/{{appcode}}.log.$(date +%F-%H:%M).log
+       when: log_stat.stat.exists
+     - name: Deploy jar file
+       shell: nohup /usr/bin/java -server -Xms512M -Xmx512M -XX:MaxPermSize=256M -Dspring.profiles.active={{env}} -jar {{dir_deploy}}{{appcode}}-{{version}}.jar & echo $! > {{dir_pid}}/{{appcode}}.pid
+       #shell: nohup /usr/bin/java -Dspring.profiles.active={{env}} -jar {{dir_deploy}}{{appcode}}-{{version}}.jar & echo $! > {{dir_pid}}/{{appcode}}.pid

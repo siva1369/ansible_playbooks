@@ -1,0 +1,20 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+    - /msservice/bin/ansible/vars/UAT/apps/{{ appcode }}.yml
+
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Test version
+       uri: 
+         url: http://msgwa-gateway-ws.glb.ebc.local:10057/{{appcode}}/actuator/info
+         return_content: yes
+       register: version_output
+       ignore_errors: yes
+     - name: Result Test
+       debug: 
+         msg: "{{version_output}}" 
+       ignore_errors: yes

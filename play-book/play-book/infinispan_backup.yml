@@ -1,0 +1,17 @@
+---
+ - hosts: 'infinispan-slave1-prd'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Stop single node
+       script: /msservice/bin/ansible/scripts/infinispan-stop.sh
+     - name: create backup 
+       archive: path=/msservice/data/infinispan/server-slave-one dest=/msservice/data/infinispan/backup/server-slave-one.tgz
+     - name: Fetch file to the backup storage
+       fetch: src=/msservice/data/infinispan/backup/server-slave-one.tgz dest=/msservice/releases/backup-infinispan
+     - name: Delete the file in remote host
+       shell: rm /msservice/data/infinispan/backup/server-slave-one.tgz
+     - name: Rename file with date
+       local_action: shell dt=`date +"%m-%d-%Y"` && mv /msservice/releases/backup-infinispan/*/server-slave-one.tgz /msservice/releases/backup-infinispan/*/server-slave-one-$dt.tgz

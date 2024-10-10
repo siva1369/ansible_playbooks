@@ -1,0 +1,24 @@
+---
+ - hosts: 'fluentd' 
+
+   vars_files:
+    - /msservice/bin/ansible/vars/fluentd_vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: "Get hostname"
+       shell: "hostname"
+       register: host
+     - name: Register disk space before cleanup
+       shell: "df -h /var/log/td-agent | grep /var/log | awk -F' '  '{print $(NF-1)}' | cut -f1 -d'%'"
+       register: result_disk_before
+     - name: copy the cleanup script
+       copy: src={{dir_release}}/cleanup_fluentd.sh dest=/home/msservice mode=u+rwx
+     - name: Run the cleanup script
+       shell: "/home/msservice/cleanup_fluentd.sh"
+     - name: Register disk space 
+       shell: "df -h /var/log/td-agent | grep /var/log | awk -F' '  '{print $(NF-1)}' | cut -f1 -d'%'"
+       register: result_disk
+     - debug:
+         msg:
+          - "{{ host.stdout }} - before- {{ result_disk_before.stdout }} - after - {{ result_disk.stdout }}"

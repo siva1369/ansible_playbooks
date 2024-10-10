@@ -1,0 +1,9 @@
+---
+ - hosts: 'infinispan-slave1-prd'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: copy the files to backup folder
+       shell: rsync -avzh --delete /msservice/data/infinispan/server-slave-one/ /msservice/data/infinispan/backup/

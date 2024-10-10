@@ -1,0 +1,18 @@
+---
+ - hosts: '{{ app }}-{{ dc }} '
+
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+    - /msservice/bin/ansible/vars/{{ env }}/apps/{{ app }}.yml
+   vars:
+    - eureka_api: eureka_{{ env }}
+
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Register to Eureka-{{ env }}
+       local_action: command curl -X PUT {{ vars[eureka_api] }}apps/{{ app }}/{{ inventory_hostname }}:{{ app }}:{{ port }}/status?value=UP
+       register: result
+     - name: Result Test
+       debug: msg="{{ dc }} instances of {{ app }} are registered to Eureka-{{ env }}."
+       when: result.changed

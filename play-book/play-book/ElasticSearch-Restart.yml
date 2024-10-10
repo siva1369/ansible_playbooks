@@ -1,0 +1,7 @@
+---
+- name: ElasticSearch Server {{ action }} 
+  hosts: '{{ host }}'
+  serial: 1
+  roles:
+      - { role: ElasticSearch-Restart, action: '{{ action }}' }
+

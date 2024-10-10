@@ -1,0 +1,9 @@
+---
+- name: "Executing {{ action }} of ElasticSearch server(s)"
+  command: sudo systemctl {{ action }} elasticsearch.service
+  register: result
+  become_method: sudo
+
+- debug:
+    msg:
+      - "{{ result.stdout }}"

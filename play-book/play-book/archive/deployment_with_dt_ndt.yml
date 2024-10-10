@@ -1,0 +1,71 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+    - /msservice/bin/ansible/vars/app/{{ appcode }}.yml
+
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Checking..................
+       local_action: stat path={{dir_release}}/{{appcode}}-{{version}}.jar
+       register: result
+     - name: Check the ear file0
+       fail: msg="ear file doesn't exist"
+       when: not result.stat.exists
+       ignore_errors: yes
+     - name: Checking..................
+       stat: path={{dir_pid}}/{{appcode}}.pid
+       register: res
+     - name: Deregister server
+       script: /msservice/bin/ansible/scripts/deregister-app.sh --some-arguments {{ env }} {{appcode}} {{ansible_hostname}}
+       when: res.stat.exists
+     - name: Remove current application deployed on host
+       shell: PID=`cat {{dir_pid}}/{{appcode}}.pid` && kill -9 $PID ; rm {{dir_pid}}/{{appcode}}.pid
+       when: res.stat.exists
+       ignore_errors: yes
+     - name: Checking..................
+       stat: path={{dir_deploy}}{{appcode}}*.jar
+       register: rest
+     - name: Preparing deploymet folder
+       shell: rm -f {{dir_deploy}}*.jar
+     - name: copy file if it exists
+       copy: src={{dir_release}}/{{appcode}}-{{version}}.jar dest={{dir_deploy}}
+       when: result.stat.exists
+     - name: Log stat
+       stat: path={{dir_log}}/{{appcode}}.log
+       register: log_stat
+     - name: Log rotate
+       shell: mv {{dir_log}}/{{appcode}}.log {{dir_log}}/{{appcode}}.log.$(date +%F-%H:%M).log
+       when: log_stat.stat.exists
+     - name: Check DT
+       local_action: stat path=/msservice/bin/ansible/vars/dynatrace/{{appcode}}-{{env}}.yml
+       register: dt_stat
+     - name: Include varfile
+       include_vars: /msservice/bin/ansible/vars/dynatrace/{{ appcode }}-{{env}}.yml
+       when: dt_stat.stat.exists == True
+     - name: Deploy jar file with DT
+       shell: nohup /usr/bin/java -agentpath:/msservice/data/dynatrace/6.1.0/agent/lib64/libdtagent.so=name={{dt_name}},server={{dt_server}}:{{dt_port}} -server -{{xms_app}} -{{xmx_app}} -{{premsize_app}} -{{heapdump_app}} -{{heapdumppath_app}} -Dspring.profiles.active={{env}} {{truststore}} -jar {{dir_deploy}}{{appcode}}-{{version}}.jar & echo $! > {{dir_pid}}/{{appcode}}.pid
+       when: dt_stat.stat.exists == True
+       ignore_errors: yes
+     - name: Deploy jar file
+       shell: nohup /usr/bin/java -server -{{xms_app}} -{{xmx_app}} -{{premsize_app}} -{{heapdump_app}} -{{heapdumppath_app}} -Dspring.profiles.active={{env}} {{truststore}} -jar {{dir_deploy}}{{appcode}}-{{version}}.jar & echo $! > {{dir_pid}}/{{appcode}}.pid
+       when: dt_stat.stat.exists == False
+       ignore_errors: yes
+     - name: Get eureka url
+       include_vars: /msservice/bin/ansible/vars/eureka/{{env}}.yml
+     - name: Waiting for Startup
+       pause: seconds=60
+     - name: collect port uat
+       shell: curl -s {{eureka}}apps/{{ appcode }}/ | grep port | head -1 | cut -d "<" -f2 | cut -d ">" -f2
+       register: port
+     - debug:  var=port.stdout
+     - name: Test
+       command: curl --head --silent http://{{ansible_hostname}}:{{port.stdout}}/{{appcode}}/
+       register: statuscode
+       ignore_errors: yes
+     - name: Result Test
+       debug: msg="test is ok"
+       when: statuscode.stdout.find("200 OK") != -1
+       ignore_errors: yes

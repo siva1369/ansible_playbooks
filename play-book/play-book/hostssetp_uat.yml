@@ -1,0 +1,5 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   tasks:
+     - name: Instance
+       local_action: shell echo "{{appcode}}::{{ inventory_hostname }}" >> /msservice/bin/ansible/hosts/UAT/instances

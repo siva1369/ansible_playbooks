@@ -1,0 +1,36 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Get PID
+       shell: PID=`cat {{dir_instance}}/PID/{{appcode}}.pid` && ps cax | grep $PID
+       register: res
+       ignore_errors: yes
+     - name: Remove from maintance
+       local_action: lineinfile dest=/msservice/bin/ansible/scripts/maintenance.conf regexp='^fatjartest' state=absent
+     - name: Check DT
+       local_action: stat path=/msservice/bin/ansible/vars/dynatrace/{{appcode}}-{{env}}.yml
+       register: dt_stat
+     - name: Include varfile
+       include_vars: /msservice/bin/ansible/vars/dynatrace/{{appcode}}-{{env}}.yml
+       when: dt_stat.stat.exists == True
+     - name: Start jar file with DT
+       shell: nohup /usr/bin/java -agentpath:/msservice/data/dynatrace/6.1.0/agent/lib64/libdtagent.so=name={{dt_name}},server={{dt_server}}:{{dt_port}} -server -{{xms_app}} -{{xmx_app}} -{{premsize_app}} -{{heapdump_app}} -{{heapdumppath_app}} -Dspring.profiles.active={{env}} -jar {{dir_deploy}}{{appcode}}-*.jar & echo $! > {{dir_pid}}/{{appcode}}.pid
+       when: dt_stat.stat.exists == True and res.rc != 0
+       ignore_errors: yes
+     - name: Start jar file
+       shell: nohup /usr/bin/java -server -{{xms_app}} -{{xmx_app}} -{{premsize_app}} -{{heapdump_app}} -{{heapdumppath_app}} -Dspring.profiles.active={{env}} -jar {{dir_deploy}}{{appcode}}-*.jar & echo $! > {{dir_pid}}/{{appcode}}.pid
+       when: dt_stat.stat.exists == False and res.rc != 0
+       ignore_errors: yes
+     - name: Send email
+       local_action: mail
+                     host='mailhub.bc'
+                     port=25
+                     from="ansible.admin@proximus.com"
+                     to="id830003m00@proximus.com"
+                     subject='The process for "{{appcode}}" was not running & now it is restarted in "{{env}}"'
+
+       when: res.rc != 0

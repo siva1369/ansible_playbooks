@@ -1,0 +1,11 @@
+xms_app: "Xms512M"
+xmx_app: "Xmx1024M"
+premsize_app: "XX:MaxPermSize=256M"
+heapdump_app: "XX:+HeapDumpOnOutOfMemoryError"
+heapdumppath_app: "XX:HeapDumpPath=/msservice/data -Xdebug"
+truststore: "-Djavax.net.ssl.trustStore=/msservice/data/iiams-user/truststore.jks -Djavax.net.ssl.trustStorePassword=changeit"
+gc:
+clienttimeout:
+port: 8570
+dt_ci: IIAMS
+dt_env: B

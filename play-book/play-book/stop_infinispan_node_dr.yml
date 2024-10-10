@@ -1,0 +1,9 @@
+---
+ - hosts: 'infinispan-dr'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Stop dr node
+       script: /msservice/bin/ansible/scripts/infinispan-stop.sh

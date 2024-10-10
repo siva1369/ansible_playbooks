@@ -1,0 +1,23 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Remove files older than 10 days
+       shell: find {{dir_log}} -name "*" -type f -mtime +10 -exec rm -f {} \;
+       register: resu
+       ignore_errors: True
+     - name: Zip files older than 2 days
+       shell: find {{dir_log}} -type f -mtime +2 \! -name "*.gz" -exec gzip -f {} \;
+       register: resa
+       ignore_errors: True
+     - name: Send email
+       local_action: mail
+                     host='mailhub.bc'
+                     port=25
+                     from="ansible.admin@proximus.com"
+                     to="raj.dash.ext@proximus.com"
+                     subject='The log file for  "{{appcode}}" is cleaned  server "{{ ansible_hostname }}"'
+       when: resa.rc == 0 and resu.rc == 0

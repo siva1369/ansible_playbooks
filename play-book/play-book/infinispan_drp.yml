@@ -1,0 +1,9 @@
+---
+ - include: /msservice/bin/ansible/play-book/stop_infinispan_singlenode.yml
+ - include: /msservice/bin/ansible/play-book/copy_data_infinispan_backup.yml
+ - include: /msservice/bin/ansible/play-book/start_infinispan_singlenode.yml
+ - include: /msservice/bin/ansible/play-book/stop_infinispan_node_dr.yml
+ - include: /msservice/bin/ansible/play-book/copy_data_restart_infinispan_backup.yml
+# - include: /msservice/bin/ansible/play-book/copy_data_dr_infinispan.yml
+ - include: /msservice/bin/ansible/play-book/start_infinispan_node_dr.yml
+

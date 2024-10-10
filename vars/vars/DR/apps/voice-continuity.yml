@@ -1,0 +1,11 @@
+xms_app: "Xms512M"
+xmx_app: "Xmx1024M"
+premsize_app: "XX:MaxPermSize=256M"
+heapdump_app: "XX:+HeapDumpOnOutOfMemoryError"
+heapdumppath_app: "XX:HeapDumpPath=/msservice/data"
+truststore:
+gc:
+clienttimeout:
+port: 8383
+dt_ci: MYEN
+dt_env: B

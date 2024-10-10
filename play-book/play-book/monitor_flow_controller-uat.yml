@@ -1,0 +1,21 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Get status code
+       shell: curl -s -o /dev/null -w "%{http_code}" http://mstba-eureka-ws.glb.ebc.local:10063/serviceregistry/eureka/apps/flow-controller/{{ instance}} 
+       register: res
+     - name: Send email
+       local_action: mail
+                     host='mailhub.bc'
+                     port=25
+                     from="ansible.admin@proximus.com"
+                     to="raj.dash.ext@proximus.com"
+                     subject='The server "{{ instance }}" is not registered in Eureka'
+       when: res.stdout != "200"
+       
+       
+

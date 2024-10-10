@@ -1,0 +1,15 @@
+---
+ - hosts: 'infinispan-prd'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Check node Status
+       script: /msservice/bin/ansible/scripts/check-infinispan-process.sh
+       register: stat
+     - name: Check exit status
+       fail: msg="Process not running"
+       when: stat.rc != 0
+  
+       

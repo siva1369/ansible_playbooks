@@ -1,0 +1,12 @@
+xms_app: "Xms512M"
+xmx_app: "Xmx1024M"
+premsize_app: "XX:MaxPermSize=256M"
+heapdump_app: "XX:+HeapDumpOnOutOfMemoryError"
+heapdumppath_app: "XX:HeapDumpPath=/msservice/data"
+truststore: "-Djavax.net.ssl.keyStore=/msservice/data/eid-belgium/keystore_prd.jks -Djavax.net.ssl.keyStorePassword=ER3gJHcOPI3k9QUjDn47 -Djavax.net.ssl.trustStore=/msservice/data/eid-belgium/truststore_prd.jks -Djavax.net.ssl.trustStorePassword=ER3gJHcOPI3k9QUjDn47"
+gc:
+clienttimeout:
+port: 
+dt_ci: "MCH"
+dt_env : "P"
+optional_profiles: ",fatjar"

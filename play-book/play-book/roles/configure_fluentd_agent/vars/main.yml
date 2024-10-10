@@ -1,0 +1,7 @@
+---
+# Default variables
+fluentd_forwarder_heartbeat_protocol: tcp
+rollback: false 
+tdagent_dryrun_directory: "/msservice/data/td-agent"
+tdagent_dryrun_config: "/msservice/data/td-agent/td-agent.conf"
+tdagent_config: "/etc/td-agent/td-agent.conf"

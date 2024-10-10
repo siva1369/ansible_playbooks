@@ -1,0 +1,9 @@
+---
+ - hosts: 'fluentd'
+   vars:
+     dir_log: "/msservice/app/td-agent/"
+   serial: 1
+   tasks:
+   - name: Creates td-agent log directory 
+     file: path={{dir_log}} state=directory mode=0754
+     ignore_errors: true   

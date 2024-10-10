@@ -1,0 +1,9 @@
+---
+- name: "Executing {{ action }} on Kibana server(s)"
+  command: sudo systemctl {{ action }} kibana.service
+  register: result
+  become_method: sudo
+
+- debug:
+    msg:
+      - "{{ result.stdout }}"

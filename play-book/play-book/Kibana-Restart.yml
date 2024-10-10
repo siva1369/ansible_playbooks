@@ -1,0 +1,7 @@
+---
+- name: Kibana Server {{ action }} 
+  hosts: '{{ host }}'
+  serial: 1
+  roles:
+      - { role: Kibana-Restart, action: '{{ action }}' }
+

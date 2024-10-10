@@ -1,0 +1,13 @@
+---
+ - hosts: '{{ appcode }}-{{ env }}'
+   vars_files:
+    - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:   
+   - name: Change app dir permissions on mssrvice on remote host
+     file: path={{dir_server}} state=directory mode=0755
+
+   - name: Creates a entry in monitoring service file 
+     local_action: shell echo {{ appcode }} >> /msservice/bin/ansible/scripts/touch-list.txt
+ 

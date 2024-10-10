@@ -1,0 +1,18 @@
+---
+ - hosts: 'fluentd-test'
+
+   vars_files:
+    - /msservice/bin/ansible/vars/fluentd_vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: "Get hostname"
+       shell: "hostname"
+       register: host
+     - name: Register disk space before cleanup
+       shell: "sed -i 's/el4711.bc/el7995.bc/g' /etc/td-agent/td-agent.conf"
+       become_user: sudo
+     - debug:
+         msg:
+          - "{{ host.stdout }}"
+

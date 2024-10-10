@@ -1,0 +1,16 @@
+---
+ - hosts: 'infinispan-slave1-prd'
+   vars_files:
+     - /msservice/bin/ansible/vars/vars.yml
+   any_errors_fatal: true
+   serial: 1
+   tasks:
+     - name: Stop single node
+       script: /msservice/bin/ansible/scripts/infinispan-stop.sh
+     - name: Create backup 
+       shell: tar -cfz /msservice/data/infinispan/server-slave-one /msservice/data/infinispan/backup/infinispan.tgz
+     - name: Copy backup to local disk 
+       shell: rsync -avzhe ssh msservice@el4630.ebc.local:/msservice/data/infinispan/backup/infinispan.tgz /msservice/releases/infinispan-backup/
+     - name: Delete backup file in the remote host
+       shell: rm  /msservice/data/infinispan/backup/infinispan.tgz 
+

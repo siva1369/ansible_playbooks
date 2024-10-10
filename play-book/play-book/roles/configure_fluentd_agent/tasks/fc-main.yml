@@ -1,0 +1,39 @@
+---
+# Apply or check prerequisites
+- name: Create folder for td-agent config
+  file:
+    path: "{{tdagent_dryrun_directory}}"  # /msservice/app/td-agent
+    state: directory  
+
+- name: td-agent installed?
+  shell: "/usr/sbin/td-agent --version"
+  register: tdagent_installed_check
+  failed_when: False
+
+- name: generate config
+  template:
+    src: "{{dynamic_config_file}}.j2"
+    dest: "{{tdagent_dryrun_config}}"  # /msservice/app/td-agent/td-agent.conf
+  register: tdagent_config_generated
+    # Test Config
+- name: Dryrun config
+  shell: "/usr/sbin/td-agent --dry-run --config {{tdagent_dryrun_config}}"
+  when: tdagent_config_generated.changed  # Only execute if config was changed
+  notify: td-agent_deploy_config  # notify only works if command is state is changed
+
+- name: Backup existing config
+  shell: "cat {{tdagent_config}} | tee {{tdagent_dryrun_config}}.bak"
+  when: tdagent_config_generated.changed
+  no_log: True
+
+- name: restore backup
+  shell: "cat {{tdagent_dryrun_config}}.bak | tee {{tdagent_dryrun_config}}"
+  no_log: True
+  when: rollback == true
+    
+# Test Config
+- name: Dryrun config
+  shell: "/usr/sbin/td-agent --dry-run --config {{tdagent_dryrun_config}}"
+  notify: td-agent_deploy_config  # notify only works if command is state is changed
+  when: rollback == true
+ # Finally, install/reload new config if anything changed (notify operation)

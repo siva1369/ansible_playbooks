@@ -1,0 +1,2 @@
+---
+eureka: "http://mstbp-eureka-ws.glb.ebc.local:10063/serviceregistry/eureka/"
